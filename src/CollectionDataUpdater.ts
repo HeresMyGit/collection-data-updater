@@ -28,10 +28,25 @@ export default class CollectionDataUpdater {
   public async updateAllTokens(partialEventData: { [key: string]: any } = {}): Promise<void> {
     partialEventData[EVENT_DATA_IS_FULL_UPDATE] = true;
 
-    for (const tokenId of await this.collectionStatusProvider.getTokenIds()) {
-      const eventData = { tokenId, ...partialEventData };
-      
-      await this.updateSingleToken(eventData);
+    // Get all possible token IDs
+    const allTokenIds = await this.collectionStatusProvider.getTokenIds();
+
+    // Loop through each token ID and update it if it's minted
+    for (const tokenId of allTokenIds) {
+      try {
+        // Check if the token has been minted by querying its owner
+        const owner = await this.collectionStatusProvider.contract.ownerOf(tokenId);
+
+        // If the token has an owner (i.e., it's been minted), process it
+        if (owner) {
+          const eventData = { tokenId: tokenId.toNumber(), ...partialEventData };
+          await this.updateSingleToken(eventData);
+        }
+      } catch (error) {
+        // If querying the owner reverts, it likely means the token hasn't been minted
+        // Continue to the next token ID
+        continue;
+      }
     }
   }
 
