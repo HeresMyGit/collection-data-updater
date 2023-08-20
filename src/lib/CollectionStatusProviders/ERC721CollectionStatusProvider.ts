@@ -29,15 +29,11 @@ export default class ERC721CollectionStatusProvider implements CollectionStatusP
   }
 
   public async getTokenIds(): Promise<BigNumber[]> {
-    if (this.tokenIds.length === 0) {
-      const maxSupply = await this.contract.maxSupply();
-      
-      for (let i = this.startTokenId; i.lte(maxSupply); i = i.add(1)) {
-        this.tokenIds.push(i);
-      }
-    }
-
-    return this.tokenIds;
+    // Call the getMintedTokens function from the contract
+    const mintedTokens: BigNumber[] = await this.contract.getMintedTokens();
+    
+    // Return the array of minted token IDs as BigNumbers
+    return mintedTokens.map(tokenId => BigNumber.from(tokenId));
   }
 
   public async processEventDataBeforeUpdate(eventData: EventDataInterface): Promise<EventDataInterface> {
